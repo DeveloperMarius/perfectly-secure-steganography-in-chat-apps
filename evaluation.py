@@ -110,8 +110,10 @@ class EvaluationHandler():
 
         # Create plots for each metric
         EvaluationHandler._create_jsd_plot(all_results, stego_texts)
+        EvaluationHandler._create_mean_jsd_plot(all_results, stego_texts)
         EvaluationHandler._create_kld_plot(all_results, stego_texts)
         EvaluationHandler._create_bert_score_plot(all_results, stego_texts)
+        EvaluationHandler._create_mean_bert_score_plot(all_results, stego_texts)
         EvaluationHandler._create_s_bert_plot(all_results, stego_texts)
         EvaluationHandler._create_mean_s_bert_plot(all_results, stego_texts)
         EvaluationHandler._create_bpc_plot(stego_texts)
@@ -256,6 +258,38 @@ class EvaluationHandler():
         plt.tight_layout()
         plt.savefig('evaluation_bert_score.png', dpi=300, bbox_inches='tight')
 
+    @staticmethod
+    def _create_mean_bert_score_plot(all_results, stego_texts):
+        global LABELS
+        bertscore_scores = []
+
+        # Calculate mean and stddev for each tool
+        for _, value in all_results.items():
+            bertscore_scores.append([results['bert_score'] for results in value.values()])
+        vector = np.array(bertscore_scores)
+        vector_mean = np.mean(vector, axis=1)
+        vector_std = np.std(vector, axis=1)
+
+        # Sort by mean score
+        data_labels = {label: [mean, srd, stego_text['reference'], stego_text['gls']] for label, mean, srd, stego_text in zip(LABELS, vector_mean, vector_std, stego_texts)}
+        data_labels = dict(sorted(data_labels.items(), key=lambda item: item[1][0], reverse=True))
+        values = list(data_labels.values())
+        labels = list(data_labels.keys())
+
+        # Plotting
+        plt.figure(figsize=FIGURE_SIZE)
+        x = np.arange(len(labels))
+        for i, value in enumerate(values):
+            if not value[3]:
+                plt.bar(x[i], values[i][0], yerr=values[i][1], capsize=5, color='#629FCA')
+            else:
+                plt.bar(x[i], values[i][0], yerr=values[i][1], capsize=5, color='lightgray')
+        plt.xticks(x, labels, rotation=45, ha='right')
+        plt.ylabel('Mean BERETScore', fontsize=12)
+        #plt.title('Mean S-BERT Evaluation Results Across Tools', fontsize=14, fontweight='bold')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig('evaluation_bert_score_mean.png', dpi=300, bbox_inches='tight')
 
     @staticmethod
     def _create_jsd_plot(all_results, stego_texts):
@@ -305,6 +339,35 @@ class EvaluationHandler():
         plt.tight_layout()
         plt.savefig('evaluation_jsd.png', dpi=300, bbox_inches='tight')
 
+    @staticmethod
+    def _create_mean_jsd_plot(all_results, stego_texts):
+        global LABELS
+        jsd_scores = []
+
+        # Calculate mean and stddev for each tool
+        for _, value in all_results.items():
+            jsd_scores.append([results['jsd'] for results in value.values()])
+        vector = np.array(jsd_scores)
+        vector_mean = np.mean(vector, axis=1)
+        vector_std = np.std(vector, axis=1)
+
+        # Sort by mean score
+        data_labels = {label: [mean, srd, stego_text['reference'], stego_text['gls']] for label, mean, srd, stego_text in zip(LABELS, vector_mean, vector_std, stego_texts)}
+        data_labels = dict(sorted(data_labels.items(), key=lambda item: item[1][0], reverse=True))
+        values = list(data_labels.values())
+        labels = list(data_labels.keys())
+
+        # Plotting
+        plt.figure(figsize=FIGURE_SIZE)
+        x = np.arange(len(labels))
+        for i, value in enumerate(values):
+            plt.bar(x[i], values[i][0], yerr=values[i][1], capsize=5, color='#629FCA')
+        plt.xticks(x, labels, rotation=45, ha='right')
+        plt.ylabel('Mean JSD Score', fontsize=12)
+        #plt.title('Mean S-BERT Evaluation Results Across Tools', fontsize=14, fontweight='bold')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig('evaluation_jsd_mean.png', dpi=300, bbox_inches='tight')
 
     @staticmethod
     def _create_kld_plot(all_results, stego_texts):
@@ -573,4 +636,4 @@ class BertScoreEvaluater(EvaluaterMetric):
 
 
 if __name__ == "__main__":
-    EvaluationHandler.run()
+    EvaluationHandler._create_plots()
